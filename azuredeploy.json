@@ -17,7 +17,14 @@
     },
     "vmName": {
         "type": "string",
-        "defaultValue":  "rhatov821",
+        "defaultValue":  "rhat-ov821",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "vmName1": {
+        "type": "string",
+        "defaultValue":  "rhat1-ov821",
       "metadata": {
         "description": "Name for the Virtual Machine."
       }
@@ -32,22 +39,26 @@
   },
     "variables": {
         "dataDisk1Name": "[concat(parameters('vmName'),'-', 'datadisk1')]",
+        "dataDisk2Name": "[concat(parameters('vmName'),'-', 'datadisk1')]",
         "imagePublisher": "RedHat",
         "imageOffer": "RHEL",
         "imageSku": "7.2",
         "nicName": "[concat(parameters('vmName'),'-','nic')]",
+        "nicName1": "[concat(parameters('vmName1'),'-','nic')]",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
         "publicIPAddressName": "[concat(parameters('vmName'),'-', 'publicip')]",
+        "publicIPAddressName1": "[concat(parameters('vmName1'),'-', 'publicip')]",
         "publicIPAddressType": "Dynamic",
         "vmSize": "Basic_A1",
-        "virtualNetworkName": "[concat(parameters('vmName'),'-', 'vnet')]",
-        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+        "virtualNetworkName": "[concat(parameters(resourceGroup().name),'-', 'vnet')]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+        "availabilitysetname": "avset1"
     },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -56,7 +67,27 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-10-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName1')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitysetname')]",
+      "apiVersion": "2018-10-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": "5"
+
+      }
+    },
+    {
+      "apiVersion": "2018-01-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -77,7 +108,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-01-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -103,7 +134,82 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2018-01-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName1')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName1'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName1'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2018-10-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName1')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "Tag1": "ManagedVM1"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName1')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "dataDisks": [
+            {
+              "name": "[variables('dataDisk2Name')]",
+              "diskSizeGB": "1",
+              "lun": 0,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName1'))]"
+            }
+          ]
+        },
+         "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -111,7 +217,8 @@
         "Tag1": "ManagedVM"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -132,7 +239,7 @@
           "dataDisks": [
             {
               "name": "[variables('dataDisk1Name')]",
-              "diskSizeGB": "100",
+              "diskSizeGB": "1",
               "lun": 0,
               "createOption": "Empty"
             }
@@ -144,8 +251,12 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
+        },
+         "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         }
       }
     }
   ]
 }
+
