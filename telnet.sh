@@ -1,6 +1,5 @@
 #!/bin/bash
 yum install telnet-server telnet
-
 # configure firewall
 firewall-cmd --add-service=telnet --zone=public
 firewall-cmd --add-service=telnet --zone=public --permanent
