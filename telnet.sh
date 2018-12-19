@@ -1,10 +1,3 @@
-yum install telnet-server telnet
-firewall-cmd --add-service=telnet --zone=public
-firewall-cmd --add-service=telnet --zone=public --permanent
-systemctl start telnet.socket
-
-
-
 #!/bin/bash
 yum install telnet-server telnet
 
