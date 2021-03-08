@@ -32,4 +32,5 @@ Install-WindowsFeature $name
 
 }
 Stop-Transcript 
+.\start-service.ps1
  
