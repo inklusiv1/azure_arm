@@ -1,7 +1,7 @@
 $CurrentDate = (Get-Date).ToString('MM-dd-yyyy_hh-mm-ss')
 $logpath="c:\Windows\Temp"
 Start-Transcript $logpath\IIS-Install-$CurrentDate.txt
-write-host "pass" $arg[0]
+write-host "pass" $args[0]
 $namelist="Web-Server
 Web-WebServer
 Web-Common-Http
