@@ -2,6 +2,8 @@ $CurrentDate = (Get-Date).ToString('MM-dd-yyyy_hh-mm-ss')
 $logpath="c:\Windows\Temp"
 Start-Transcript $logpath\IIS-Install-$CurrentDate.txt
 $pass=$passedpass
+write-host "pass" $pass
+write-host "passed" $passedpass
 $namelist="Web-Server
 Web-WebServer
 Web-Common-Http
@@ -32,3 +34,4 @@ Install-WindowsFeature $name
 
 }
 Stop-Transcript 
+ 
